@@ -34,7 +34,7 @@ public with sharing class MaintenanceRequestHelper {
         cloneEquipmentItems(newCases);
     }
 
-    private static void cloneEquipmentItems(List<Case> newCases){
+    private static void cloneEquipmentItems2(List<Case> newCases){
         //get all Equipment Maintenance items for each child. 
         //SELECT Id, Name FROM Equipment_Maintenance_Item__c WHERE Maintenance_Request__r.Id = '5007R00003Ys7XOQAZ'
         List<Equipment_Maintenance_Item__c> itemsToInsert = new List<Equipment_Maintenance_Item__c>();
@@ -47,6 +47,26 @@ public with sharing class MaintenanceRequestHelper {
                 itemsToInsert.add(cloneItem);
             }
         }
+        insert itemsToInsert;
+    }
+
+    private static void cloneEquipmentItems(List<Case> newCases){
+        //transform newCases to Map of key: newCase.ParentId, value: newCase
+        Map<Id, Case> caseMap = new Map<Id, Case>();
+        for(Case newCase : newCases){
+            caseMap.put(newCase.ParentId, newCase);
+        }
+
+        List<Equipment_Maintenance_Item__c> itemsToInsert = new List<Equipment_Maintenance_Item__c>();
+        
+        for(Equipment_Maintenance_Item__c item: [SELECT Id, Maintenance_Request__r.Id FROM Equipment_Maintenance_Item__c WHERE Maintenance_Request__r.Id IN : caseMap.keyset()] ){
+            Equipment_Maintenance_Item__c cloneItem = item.clone(false, true, false, false);
+            Id oldParentId = cloneItem.Maintenance_Request__r.Id;
+            Case newParent = caseMap.get(oldParentId);
+            cloneItem.Maintenance_Request__c = newParent.Id;
+            itemsToInsert.add(cloneItem);
+        }
+
         insert itemsToInsert;
     }
     
