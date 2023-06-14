@@ -31,32 +31,21 @@ public with sharing class MaintenanceRequestHelper {
         }
         system.debug('newCases to insert: '+newCases);
         insert newCases;
+        //helper function to clone and insert new EquipmentItem children related to the new cases
         cloneEquipmentItems(newCases);
     }
 
-    private static void cloneEquipmentItems2(List<Case> newCases){
-        //get all Equipment Maintenance items for each child. 
-        //SELECT Id, Name FROM Equipment_Maintenance_Item__c WHERE Maintenance_Request__r.Id = '5007R00003Ys7XOQAZ'
-        List<Equipment_Maintenance_Item__c> itemsToInsert = new List<Equipment_Maintenance_Item__c>();
-        for (Case newCase : newCases){
-            List<Equipment_Maintenance_Item__c> items = [SELECT Id, Name FROM Equipment_Maintenance_Item__c WHERE Maintenance_Request__r.Id = :newCase.ParentId];
-            for(Equipment_Maintenance_Item__c item : items){
-                Equipment_Maintenance_Item__c cloneItem = item.clone(false, true, false, false);
-                cloneItem.Maintenance_Request__c = newCase.Id; // the most important part
-
-                itemsToInsert.add(cloneItem);
-            }
-        }
-        insert itemsToInsert;
-    }
-
+    //Get all Equipment_Maintenance_Items concerned, and clone them, 
+    //then assign them a new parent - the newly created case - (in their master detail rltshps)
     private static void cloneEquipmentItems(List<Case> newCases){
         //transform newCases to Map of key: newCase.ParentId, value: newCase
+        //newCase.ParentId is oldCase Id
         Map<Id, Case> caseMap = new Map<Id, Case>();
         for(Case newCase : newCases){
             caseMap.put(newCase.ParentId, newCase);
         }
 
+        //list to hold new Equipment_Maintenance_Items to insert
         List<Equipment_Maintenance_Item__c> itemsToInsert = new List<Equipment_Maintenance_Item__c>();
         
         for(Equipment_Maintenance_Item__c item: [SELECT Id, Maintenance_Request__r.Id FROM Equipment_Maintenance_Item__c WHERE Maintenance_Request__r.Id IN : caseMap.keyset()] ){
@@ -78,7 +67,7 @@ public with sharing class MaintenanceRequestHelper {
         List<Decimal> cycleDates = new List<Decimal>();
 
         for (Equipment_Maintenance_Item__c item : closedCase.Equipment_Maintenance_Items__r){
-            system.debug('Maintenance Cycle: '+item.Equipment__r.Maintenance_Cycle__c);
+            system.debug('Maintenance Cycle: ' + item.Equipment__r.Maintenance_Cycle__c);
             cycleDates.add(item.Equipment__r.Maintenance_Cycle__c);                
         }
         cycleDates.sort();
