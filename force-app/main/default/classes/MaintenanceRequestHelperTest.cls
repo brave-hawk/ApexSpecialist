@@ -42,7 +42,7 @@ public class MaintenanceRequestHelperTest {
             Case maintenanceRequestTest = new Case(
                 Type = 'Repair', //or 'Routine Maintenance'
                 Status = 'New',
-                Origin = 'Web',
+                Origin = 'Web',                
                 Vehicle__c = testVehicleList.get(i).Id                
             );
             maintenanceRequestTestList.add(maintenanceRequestTest);
@@ -60,12 +60,47 @@ public class MaintenanceRequestHelperTest {
             );
             maintenanceItemTestList.add(testMaintenanceItem);
         }
-        insert maintenanceItemTestList;
-        
+        insert maintenanceItemTestList;      
 
+    }
+
+    //start Tests now
+    @isTest
+    static void testUpdateWorkOrders(){
+        List<Case> toProcess = new List<Case>();
+        toProcess = [SELECT Id, Type, Vehicle__c, ProductId, 
+        (SELECT Id, Name, Equipment__r.Maintenance_Cycle__c FROM Equipment_Maintenance_Items__r ) 
+        FROM Case WHERE (Type='Routine Maintenance' OR Type='Repair') 
+        AND IsClosed=false ];
        
+        //Close MaintenanceRequest(Case)
+        for(Case toClose: toProcess){
+            toClose.Status = 'Closed';
+        }
+        update toProcess;
+
+        
+        List<Case> newCasesTest = new List<Case>();
+        newCasesTest = [SELECT Id, Type, Vehicle__c, ProductId, Subject, Date_Due__c,
+        (SELECT Id, Name, Equipment__r.Maintenance_Cycle__c FROM Equipment_Maintenance_Items__r ) 
+        FROM Case WHERE (Type='Routine Maintenance' OR Type='Repair') 
+        AND IsClosed=false ];
+
+        system.debug('Test closed list size: '+newCasesTest.size()); //should be 300
+
+        ////Positive Asserts:
+
+        //should have 300 new Open cases (MaintenanceRequests)
+        System.assertEquals(300, newCasesTest.size());
+        //should have subject == 'Future Routine Checkup';
+        System.assertEquals('Future Routine Checkup', newCasesTest[0].Subject);
+        //should have Date_Due__c == today+10; 
+        //(confirms that method shortestCycleDate is working)
+        System.assertEquals(System.today().addDays(10), newCasesTest[0].Date_Due__c);
 
 
     }
+
+
     
 }

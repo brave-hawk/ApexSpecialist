@@ -2,13 +2,13 @@ public with sharing class MaintenanceRequestHelper {
     
     public static void updateWorkOrders(List<Case> closedList) {        
     
-        system.debug('Received justClosed: '+ closedList);
+        //system.debug('Received justClosed: '+ closedList);
 
         List<Case> newCases = new List<Case>();
         for (Case maintenanceRequest: closedList){
             //clone each maintenanceRequest(Case) to preserve relationships.
             //Options: opt_preserve_id, opt_IsDeepClone, opt_preserve_readonly_timestamps, opt_preserve_autonumber
-            system.debug('maintenanceRequest is: '+ maintenanceRequest);
+            //system.debug('maintenanceRequest is: '+ maintenanceRequest);
             Case c = maintenanceRequest.clone(false, true, false, false);
             //modify fields to conform to question:
             c.Subject = 'Future Routine Checkup';
@@ -21,7 +21,7 @@ public with sharing class MaintenanceRequestHelper {
             c.ParentId = maintenanceRequest.Id; //use this to map children
             newCases.add(c);       
         }
-        system.debug('newCases to insert: '+newCases);
+        //system.debug('newCases to insert: '+newCases);
         insert newCases;
         //helper function to clone and insert new EquipmentItem children related to the new cases
         cloneEquipmentItems(newCases);
@@ -52,14 +52,12 @@ public with sharing class MaintenanceRequestHelper {
     }
     
     private static Integer shortestCycleDate(Case closedCase){   
-        if (closedCase == null){
-            return 0;
-        }         
+               
         //create list of MaintenanceCycle dates
         List<Decimal> cycleDates = new List<Decimal>();
 
         for (Equipment_Maintenance_Item__c item : closedCase.Equipment_Maintenance_Items__r){
-            system.debug('Maintenance Cycle: ' + item.Equipment__r.Maintenance_Cycle__c);
+            //system.debug('Maintenance Cycle: ' + item.Equipment__r.Maintenance_Cycle__c);
             cycleDates.add(item.Equipment__r.Maintenance_Cycle__c);                
         }
         cycleDates.sort();
