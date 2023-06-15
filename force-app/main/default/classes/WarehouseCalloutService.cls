@@ -12,8 +12,10 @@ public class WarehouseCalloutService implements Queueable, Database.AllowsCallou
         //probably a better way to optimize this IMHO
         //see if you can decipher: https://salesforce.stackexchange.com/questions/361083/queuable-apex-callout
 
-        List<Product2> newEquipment = new List<Product2>();        
-        List<Object> fetchedEquipmentList = makeGetCallout();
+        List<Product2> newEquipment = new List<Product2>();  
+        //do callout. Separated out to do TEST.
+        HttpResponse resp = doGetCallout();      
+        List<Object> fetchedEquipmentList = makeListFromCallout(resp);
         for(Object listItem : fetchedEquipmentList){
             Map<String,Object> data = (Map<String,Object>)listItem;
             Product2 newProd = new Product2(
@@ -32,26 +34,31 @@ public class WarehouseCalloutService implements Queueable, Database.AllowsCallou
         upsert newEquipment Warehouse_SKU__c;              
     }
 
-    //handle response from server:
-    public static List<Object> makeGetCallout(){
+    public static HttpResponse doGetCallout(){
         Http http = new Http();
         HttpRequest request = new HttpRequest();
         request.setEndpoint(WAREHOUSE_URL);
         request.setHeader('Content-Type', 'application/json;charset=UTF-8');
         request.setMethod('GET');
-        List<Object> results = new List<Object>();
-        try {
-            HttpResponse response = http.send(request);        
-             // If the request is successful, parse the JSON response.
-            if(response.getStatusCode() == 200) {
-                // Deserializes the JSON string into collections of primitive data types.
-                results = (List<Object>) JSON.deserializeUntyped(response.getBody());
-                system.debug('Results: '+results);                
-            }
+        HttpResponse response = new HTTPResponse();       
+        response = http.send(request);
+        // If the request is successful, parse the JSON response.
+        if(response.getStatusCode() == 200) {
+            //all good; process results
+            makeListFromCallout(response);
+        }
             
-        } catch (Exception e) {
-            system.debug('A GET error occured: '+e);            
-        }  
+            
+      
+        return response;
+    }
+
+    //handle response from server:
+    public static List<Object> makeListFromCallout(HttpResponse response){
+        
+        List<Object> results = new List<Object>();
+        results = (List<Object>) JSON.deserializeUntyped(response.getBody());
+        system.debug('Results: '+results); 
         return results;
     }
 
