@@ -6,7 +6,7 @@ public class WarehouseCalloutService implements Queueable, Database.AllowsCallou
         Id jobId = System.enqueueJob(updateJob);
     */
 
-    private static final String WAREHOUSE_URL = 'https://th-superbadge-apex.herokuapp.com/equipment';
+    private static final String WAREHOUSE_URL = 'https://th-superbadge-apex.herokuapp.com/equipment';    
 
     public void execute(QueueableContext context) {
         //probably a better way to optimize this IMHO
