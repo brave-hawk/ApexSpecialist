@@ -1,15 +1,7 @@
 public with sharing class MaintenanceRequestHelper {
     
     public static void updateWorkOrders(List<Case> closedList) {        
-        /*
-        When an existing maintenance request of type Repair or Routine Maintenance is closed, 
-        create a new maintenance request for a future routine checkup.
-        */
-
-        //ToDo:
-        //helper method to get shortest/soonest cycle date
-        
-
+    
         system.debug('Received justClosed: '+ closedList);
 
         List<Case> newCases = new List<Case>();
